@@ -8,52 +8,6 @@ from python_tsp.exact import solve_tsp_dynamic_programming # Solución exacta
 
 class DatasetCreation:
     
-    # Función para crear una matriz de adyaciencia
-    @staticmethod
-    def tsp_solution_to_adjacency(permutation, distance=None, distance_matrix=None):
-        """
-        Convierte una secuencia de permutación en una matriz de adyacencia.
-
-        Variables de Entrada:
-            permutation (list o array-like): Secuencia de permutación que representa el orden de los nodos.
-            distance (float, opcional): Valor de la distancia esperado. Por defecto None.
-            distance_matrix (array-like, opcional): Matriz de distancias entre nodos. Por defecto None.
-
-        Variables de salida :
-            numpy.ndarray: Matriz de adyacencia que representa las conexiones entre los nodos.
-
-        Expcepciones:
-            AssertionError: Si se proporciona `distance` y `distance_matrix` no es None, y la suma de distancias
-                            calculada a partir de la matriz de adyacencia no coincide con el valor dado
-                            dentro de una tolerancia.
-
-        Notea:
-            - La secuencia de permutación representa la solución (aprox.) del TSP.
-            - La matriz de adyacencia resultante refleja las conexiones entre nodos según la permutación dada.
-            Cada fila y columna corresponden a un nodo, y el valor en (i, j) es 1 si existe una conexión
-            de i a j, y 0 en caso contrario.
-            - Si se proporcionan `distance` y `distance_matrix`, la función verifica que la suma de distancias
-            calculada coincida con el valor esperado dentro de una tolerancia.
-        """
-
-        size = len(permutation)
-        to_return = np.zeros((size, size))
-        for i in range(size - 1):
-            curr = permutation[i]
-            next_ = permutation[i + 1]
-            to_return[curr, next_] = 1
-        to_return[next_, 0] = 1
-
-        if distance is not None:
-            if distance_matrix is not None:
-                masked_values = to_return * distance_matrix
-                # Sum along the appropriate axis
-                sum_values = np.sum(masked_values, axis=(0, 1))
-                assert np.allclose(sum_values, distance, rtol=0.5, atol=0)
-
-        return to_return
-    
-
     # Función para la creación de la base de datos 
     @staticmethod
     def create_dataset(num_nodes, num_datasets):
@@ -82,6 +36,51 @@ class DatasetCreation:
         solution_paths = []
         solution_adjacencies = []
         solution_distances = []
+
+
+
+        def tsp_solution_to_adjacency(permutation, distance=None, distance_matrix=None):
+            """
+            Convierte una secuencia de permutación en una matriz de adyacencia.
+
+            Variables de Entrada:
+                permutation (list o array-like): Secuencia de permutación que representa el orden de los nodos.
+                distance (float, opcional): Valor de la distancia esperado. Por defecto None.
+                distance_matrix (array-like, opcional): Matriz de distancias entre nodos. Por defecto None.
+
+            Variables de salida :
+                numpy.ndarray: Matriz de adyacencia que representa las conexiones entre los nodos.
+
+            Expcepciones:
+                AssertionError: Si se proporciona `distance` y `distance_matrix` no es None, y la suma de distancias
+                                calculada a partir de la matriz de adyacencia no coincide con el valor dado
+                                dentro de una tolerancia.
+
+            Notea:
+                - La secuencia de permutación representa la solución (aprox.) del TSP.
+                - La matriz de adyacencia resultante refleja las conexiones entre nodos según la permutación dada.
+                Cada fila y columna corresponden a un nodo, y el valor en (i, j) es 1 si existe una conexión
+                de i a j, y 0 en caso contrario.
+                - Si se proporcionan `distance` y `distance_matrix`, la función verifica que la suma de distancias
+                calculada coincida con el valor esperado dentro de una tolerancia.
+            """
+
+            size = len(permutation)
+            to_return = np.zeros((size, size))
+            for i in range(size - 1):
+                curr = permutation[i]
+                next_ = permutation[i + 1]
+                to_return[curr, next_] = 1
+            to_return[next_, 0] = 1
+
+            if distance is not None:
+                if distance_matrix is not None:
+                    masked_values = to_return * distance_matrix
+                    # Sum along the appropriate axis
+                    sum_values = np.sum(masked_values, axis=(0, 1))
+                    assert np.allclose(sum_values, distance, rtol=0.5, atol=0)
+
+            return to_return
 
         for _ in range(num_datasets):
             # 1) Generar puntos aleatorios en [0,100)×[0,100)
