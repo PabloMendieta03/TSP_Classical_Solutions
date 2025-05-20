@@ -1,3 +1,7 @@
 numpy
 pandas
-pyconcorde @ git+https://github.com/jvkersch/pyconcorde.git
+python-tsp
+torch>=2.0.0
+torchvision>=0.15.0
+torchaudio>=2.0.0
+torch-geometric
