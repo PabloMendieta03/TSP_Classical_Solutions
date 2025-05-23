@@ -1,8 +1,6 @@
 #functions that are useful for assessing quality of solutions
 
 import torch
-import numpy as np
-
 
 class SolutionAnalysys: 
 

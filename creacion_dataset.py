@@ -1,5 +1,7 @@
 # Creación de la Base de Datos para tener un gran conjunto de problemas del viajante con los que trabajar 
 
+
+# ----- Importación de Librerias ----- #
 from torch_geometric.data import Data
 import itertools
 import torch
@@ -11,9 +13,11 @@ importlib.reload(dataset)
 from dataset import DatasetCreation
 
 
+# ======================== Base de Datos para entrenar la Red Neuronal ======================== #
+
 TSPs = []
 
-num_datasets = 500
+num_datasets = 1000
 
 for num_nodes in [5, 10, 12, 15]:
   node_coords, distance_matrices,solution_paths, solution_adjacencies, distances = DatasetCreation.create_dataset(num_nodes = num_nodes,  num_datasets = num_datasets)
@@ -41,8 +45,9 @@ for num_nodes in [5, 10, 12, 15]:
       data.disntace_matrices = distance_matrices
       TSPs.append(data)
 
+# Guardar la Base de Datos 
+torch.save(TSPs, "tsps1000.pt")
 
 
-# --- Una vez generados tus TSPs:
-# TSPs = [...]
-torch.save(TSPs, "tsps.pt")
+
+
