@@ -1,10 +1,13 @@
 # Creación de la base de datos de problemas del TSP 
 
 
-# Importación de librerías 
+# ----- Importación de librerías ----- #
 import numpy as np 
+import math
+from typing import Dict, List, Tuple
 from python_tsp.exact import solve_tsp_dynamic_programming # Solución exacta 
 # from python_tsp.heuristics import solve_tsp_local_search # Solución heurística
+
 
 class DatasetCreation:
     
@@ -113,4 +116,116 @@ class DatasetCreation:
         return to_return
 
 
+# Estudio de problemas clásicos del TSP 
+class FamousTSP:
+    """
+    Clase para gestionar instancias TSP de TSPLIB y tours óptimos.
 
+    Atributos:
+        dimension: int                         Número de nodos.
+        coords: Dict[int, Tuple[float, float]] Coordenadas de cada nodo.
+        dist_matrix: List[List[int]]          Matriz de distancias redondeadas según TSPLIB.
+        tour: List[int]                       Secuencia de nodos del tour.
+        cost: int                             Coste total del tour.
+    """
+
+    def __init__(self, tsp_file: str, tour_file: str):
+        # Leer dimensión y coordenadas
+        self.dimension = self._read_dimension(tsp_file)
+        self.coords = self._read_tsp(tsp_file)
+        if len(self.coords) != self.dimension:
+            raise ValueError(f"Número de coordenadas leído ({len(self.coords)}) != dimensión ({self.dimension})")
+        # Generar matriz de distancias TSPLIB (distancia euclídea + redondeo)
+        self.dist_matrix = self._compute_distance_matrix(self.coords)
+        # Leer tour óptimo
+        self.tour = self._read_tour(tour_file)
+        if len(self.tour) != self.dimension:
+            raise ValueError(f"Longitud del tour ({len(self.tour)}) != dimensión ({self.dimension})")
+        # Calcular coste total del tour
+        self.cost = self._compute_tour_cost(self.tour, self.dist_matrix)
+
+    @staticmethod
+    def _read_dimension(filename: str) -> int:
+        """
+        Lee la línea DIMENSION en el .tsp para obtener el número de nodos.
+        """
+        with open(filename, 'r') as f:
+            for line in f:
+                if line.upper().startswith('DIMENSION'):
+                    # Formato: DIMENSION : 280
+                    parts = line.replace(':', ' ').split()
+                    for token in parts:
+                        if token.isdigit():
+                            return int(token)
+        raise ValueError('No se encontró la línea DIMENSION en el archivo .tsp')
+
+    @staticmethod
+    def _read_tsp(filename: str) -> Dict[int, Tuple[float, float]]:
+        """
+        Parsea un archivo .tsp en formato TSPLIB y devuelve coordenadas.
+        Sólo procesa la sección NODE_COORD_SECTION.
+        """
+        coords: Dict[int, Tuple[float, float]] = {}
+        with open(filename, 'r') as f:
+            in_node_section = False
+            for line in f:
+                line = line.strip()
+                if line.upper() == 'NODE_COORD_SECTION':
+                    in_node_section = True
+                    continue
+                if in_node_section:
+                    if not line or line.upper() == 'EOF':
+                        break
+                    parts = line.split()
+                    idx = int(parts[0])
+                    coords[idx] = (float(parts[1]), float(parts[2]))
+        return coords
+
+    @staticmethod
+    def _compute_distance_matrix(coords: Dict[int, Tuple[float, float]]) -> List[List[int]]:
+        """
+        Crea la matriz de distancias TSPLIB entre nodos.
+        Cada distancia se redondea como: int(d + 0.5).
+        Se recorre únicamente sobre las claves presentes en coords.
+        """
+        # Determine máximo índice para dimensionar la matriz
+        max_idx = max(coords.keys())
+        dist: List[List[int]] = [[0] * (max_idx + 1) for _ in range(max_idx + 1)]
+        # Calcular distancias solo entre nodos existentes
+        for i, (xi, yi) in coords.items():
+            for j, (xj, yj) in coords.items():
+                d = math.hypot(xi - xj, yi - yj)
+                dist[i][j] = int(d + 0.5)
+        return dist
+
+    @staticmethod
+    def _read_tour(filename: str) -> List[int]:
+        """
+        Parsea un archivo .opt.tour TSPLIB y devuelve la secuencia de nodos del tour.
+        Lee la sección TOUR_SECTION hasta encontrar -1 o EOF.
+        """
+        tour: List[int] = []
+        with open(filename, 'r') as f:
+            in_tour_section = False
+            for line in f:
+                line = line.strip()
+                if line.upper() == 'TOUR_SECTION':
+                    in_tour_section = True
+                    continue
+                if in_tour_section:
+                    if not line or line == '-1' or line.upper() == 'EOF':
+                        break
+                    tour.append(int(line))
+        return tour
+
+    @staticmethod
+    def _compute_tour_cost(tour: List[int], dist_matrix: List[List[int]]) -> int:
+        """
+        Suma el coste de un tour cerrado usando la matriz de distancias.
+        """
+        total = 0
+        for k in range(len(tour)):
+            i = tour[k]
+            j = tour[(k + 1) % len(tour)]
+            total += dist_matrix[i][j]
+        return total

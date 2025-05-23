@@ -202,24 +202,11 @@ class AntColonyOptimizer:
         candidate_size: int = 30,
         stagnation_limit: int = 20
     ):
-        """
-        distance_matrix: symmetric matrix of distances
-        n_ants: number of ants per iteration
-        n_best: number of best ants depositing pheromone
-        n_iterations: number of iterations
-        decay: pheromone decay factor
-        alpha: pheromone importance
-        beta: heuristic importance
-        candidate_size: number of nearest neighbors per node
-        stagnation_limit: iterations without improvement to trigger reset
-        """
         self.dist_matrix = distance_matrix
         self.N = distance_matrix.shape[0]
-        # Initialize pheromone
         self.pheromone = np.ones((self.N, self.N)) / self.N
-        # Candidate list: top-k nearest neighbors per node
         self.candidates = [
-            list(np.argsort(distance_matrix[i])[:candidate_size+1])  # includes self
+            list(np.argsort(distance_matrix[i])[1:candidate_size+1])
             for i in range(self.N)
         ]
         self.n_ants = n_ants
@@ -234,14 +221,13 @@ class AntColonyOptimizer:
         best_cost = float('inf')
         best_route = None
         stagnation = 0
-
         start_time = time.perf_counter()
+
         for iteration in range(self.n_iterations):
             all_routes = self._generate_all_routes()
             costs = [self._route_cost(r) for r in all_routes]
             idx_sorted = np.argsort(costs)
 
-            # Update best
             if costs[idx_sorted[0]] < best_cost:
                 best_cost = costs[idx_sorted[0]]
                 best_route = all_routes[idx_sorted[0]]
@@ -249,17 +235,13 @@ class AntColonyOptimizer:
             else:
                 stagnation += 1
 
-            # Spread pheromone from top ants
             self._spread_pheromone(
                 [all_routes[i] for i in idx_sorted[:self.n_best]],
                 [costs[i] for i in idx_sorted[:self.n_best]]
             )
-            # Evaporation
             self.pheromone *= (1 - self.decay)
 
-            # Stagnation: reset or reinforce global best
             if stagnation >= self.stagnation_limit:
-                # reheat: increase pheromone along best_route
                 for i in range(len(best_route)-1):
                     u, v = best_route[i], best_route[i+1]
                     self.pheromone[u][v] += 1.0 / best_cost
@@ -276,21 +258,22 @@ class AntColonyOptimizer:
         visited = set(route)
         while len(route) < self.N:
             current = route[-1]
-            probs = []
             cand = [c for c in self.candidates[current] if c not in visited]
-            # fallback to all if full
             if not cand:
                 cand = [j for j in range(self.N) if j not in visited]
+            weights = []
             for j in cand:
                 pher = self.pheromone[current][j] ** self.alpha
                 heuristic = (1.0 / self.dist_matrix[current][j]) ** self.beta
-                probs.append(pher * heuristic)
-            total = sum(probs)
-            probs = [p/total for p in probs]
+                weights.append(pher * heuristic)
+            total = sum(weights)
+            if total <= 0 or np.isnan(total):
+                probs = [1/len(cand)] * len(cand)
+            else:
+                probs = [w/total for w in weights]
             next_city = np.random.choice(cand, p=probs)
             route.append(next_city)
             visited.add(next_city)
-        # return to start
         route.append(route[0])
         return route
 
@@ -313,6 +296,7 @@ class AntColonyOptimizer:
                 self.pheromone[v][u] += deposit
 
 
+
 # Resolución por Algoritmos Genéticos 
 class GeneticAlgorithm:
     def __init__(
@@ -321,14 +305,18 @@ class GeneticAlgorithm:
         population_size: int = 100,
         elite_size: int = 20,
         mutation_rate: float = 0.01,
-        generations: int = 500
+        generations: int = 500,
+        tournament_size: int = 5
     ):
         """
-        distance_matrix: symmetric matrix of distances
-        population_size: number of individuals per population
-        elite_size: number of best individuals to carry over
-        mutation_rate: probability of swapping two cities
-        generations: number of generations to evolve
+        Optimized GA for TSP with PMX crossover.
+
+        distance_matrix: symmetric np.array of distances
+        population_size: number of individuals
+        elite_size: number of best to carry over
+        mutation_rate: prob of swap mutation
+        generations: number of generations
+        tournament_size: number of competitors in tournament selection
         """
         self.dist_matrix = distance_matrix
         self.N = distance_matrix.shape[0]
@@ -336,99 +324,90 @@ class GeneticAlgorithm:
         self.elite_size = elite_size
         self.mutation_rate = mutation_rate
         self.generations = generations
+        self.tournament_size = tournament_size
 
     def _create_route(self):
-        # random permutation of city indices
-        route = list(range(self.N))
-        random.shuffle(route)
-        route.append(route[0])  # complete the cycle
-        return route
+        route = np.arange(self.N, dtype=int)
+        np.random.shuffle(route)
+        return np.append(route, route[0])
 
     def _initial_population(self):
         return [self._create_route() for _ in range(self.pop_size)]
 
     def _route_distance(self, route):
-        return sum(
-            self.dist_matrix[route[i]][route[i+1]]
-            for i in range(len(route)-1)
-        )
+        idx = np.arange(len(route)-1)
+        return np.sum(self.dist_matrix[route[idx], route[idx+1]])
 
     def _rank_routes(self, population):
-        # return list of (route, distance) sorted by distance
-        fitness_results = [(route, self._route_distance(route)) for route in population]
-        return sorted(fitness_results, key=lambda x: x[1])
+        distances = np.array([self._route_distance(r) for r in population])
+        sorted_idx = np.argsort(distances)
+        return [population[i] for i in sorted_idx], distances[sorted_idx]
 
-    def _selection(self, ranked_routes):
-        # elitism: keep top elite_size
-        selection_results = [route for route, _ in ranked_routes[:self.elite_size]]
-        # roulette wheel on remaining
-        df = [(route, dist) for route, dist in ranked_routes]
-        # compute cumulative probabilities
-        total_fitness = sum(1.0/dist for route, dist in df[self.elite_size:])
-        cum_probs = []
-        cum_sum = 0
-        for route, dist in df[self.elite_size:]:
-            cum_sum += (1.0/dist) / total_fitness
-            cum_probs.append((route, cum_sum))
-        # select remaining
+    def _tournament_selection(self, population, distances):
+        selected = []
+        elites = [population[i] for i in sorted(range(len(distances)), key=lambda i: distances[i])[:self.elite_size]]
+        selected.extend(elites)
         for _ in range(self.pop_size - self.elite_size):
-            pick = random.random()
-            for route, cum_prob in cum_probs:
-                if pick <= cum_prob:
-                    selection_results.append(route)
-                    break
-        return selection_results
+            contenders = random.sample(range(self.pop_size), self.tournament_size)
+            best = min(contenders, key=lambda i: distances[i])
+            selected.append(population[best])
+        return selected
 
-    def _crossover(self, parent1, parent2):
-        # ordered crossover
-        start, end = sorted(random.sample(range(1, self.N), 2))
-        child_p1 = parent1[start:end]
-        child = [None] * self.N
-        child[start:end] = child_p1
-        p2_iter = [c for c in parent2 if c not in child_p1]
-        idx = 0
-        for i in range(self.N):
-            if child[i] is None:
-                child[i] = p2_iter[idx]
-                idx += 1
-        child.append(child[0])
-        return child
+    def _pmx_crossover(self, p1, p2):
+        size = self.N
+        cx1, cx2 = sorted(random.sample(range(1, size), 2))
+        child = np.full(size, -1, dtype=int)
+        child[cx1:cx2] = p1[cx1:cx2]
+        for i in range(cx1, cx2):
+            if p2[i] not in child:
+                val = p2[i]
+                pos = i
+                while True:
+                    val2 = p1[pos]
+                    pos = np.where(p2 == val2)[0][0]
+                    if child[pos] == -1:
+                        child[pos] = val
+                        break
+        for i in range(size):
+            if child[i] == -1:
+                child[i] = p2[i]
+        return np.append(child, child[0])
 
-    def _breed_population(self, selection_results):
-        children = selection_results[:self.elite_size]
-        non_elite = selection_results[self.elite_size:]
-        for i in range(len(non_elite)):
-            parent1 = random.choice(selection_results)
-            parent2 = random.choice(selection_results)
-            child = self._crossover(parent1, parent2)
+    def _breed_population(self, selected):
+        children = selected[:self.elite_size]
+        for _ in range(self.pop_size - self.elite_size):
+            p1, p2 = random.sample(selected, 2)
+            child = self._pmx_crossover(p1[:-1], p2[:-1])
             children.append(child)
         return children
 
     def _mutate(self, route):
-        for swapped in range(1, self.N):
+        for i in range(1, self.N):
             if random.random() < self.mutation_rate:
-                swap_with = random.randint(1, self.N-1)
-                route[swapped], route[swap_with] = route[swap_with], route[swapped]
+                j = random.randint(1, self.N-1)
+                route[i], route[j] = route[j], route[i]
+        route[-1] = route[0]
         return route
 
-    def _mutate_population(self, children):
-        return [self._mutate(child) for child in children]
+    def _mutate_population(self, population):
+        return [self._mutate(r.copy()) for r in population]
 
     def run(self):
         pop = self._initial_population()
-        start_time = time.perf_counter()
-        for generation in range(self.generations):
-            ranked = self._rank_routes(pop)
-            best_distance = ranked[0][1]
-            print(f"Gen {generation+1}/{self.generations}, best dist: {best_distance}")
-            selected = self._selection(ranked)
-            children = self._breed_population(selected)
-            pop = self._mutate_population(children)
-        ranked = self._rank_routes(pop)
-        best_route, best_dist = ranked[0]
-        total_time = time.perf_counter() - start_time
-        return best_route, best_dist, total_time
-
+        best_route = None
+        best_dist = float('inf')
+        start = time.perf_counter()
+        for gen in range(1, self.generations + 1):
+            ranked, distances = self._rank_routes(pop)
+            if distances[0] < best_dist:
+                best_dist = distances[0]
+                best_route = ranked[0]
+            print(f"Gen {gen}/{self.generations}, best dist: {best_dist}")
+            selected = self._tournament_selection(pop, distances)
+            bred = self._breed_population(selected)
+            pop = self._mutate_population(bred)
+        elapsed = time.perf_counter() - start
+        return best_route.tolist(), best_dist, elapsed
 
 
 
