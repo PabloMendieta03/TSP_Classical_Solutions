@@ -7,3 +7,4 @@ torchaudio>=2.0.0
 torch-geometric
 matplotlib
 tsplib95
+torchinfo
