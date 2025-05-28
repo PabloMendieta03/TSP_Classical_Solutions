@@ -9,3 +9,5 @@ Pasos para la creación del entorno:
 2. ptyhon -m venv tsp-venv 
 3. .\tsp-venv\Scripts\Activate 
 4. pip install -r requirements.txt
+
+
