@@ -202,20 +202,26 @@ class FamousTSP:
     def _read_tour(filename: str) -> List[int]:
         """
         Parsea un archivo .opt.tour TSPLIB y devuelve la secuencia de nodos del tour.
-        Lee la sección TOUR_SECTION hasta encontrar -1 o EOF.
+        Admite varios nodos por línea, hasta encontrar -1 o EOF.
         """
         tour: List[int] = []
         with open(filename, 'r') as f:
-            in_tour_section = False
+            in_section = False
             for line in f:
                 line = line.strip()
                 if line.upper() == 'TOUR_SECTION':
-                    in_tour_section = True
+                    in_section = True
                     continue
-                if in_tour_section:
+                if in_section:
                     if not line or line == '-1' or line.upper() == 'EOF':
                         break
-                    tour.append(int(line))
+                    # Aquí viene lo importante: dividir la línea en varios tokens
+                    for token in line.split():
+                        nodo = int(token)
+                        if nodo == -1:
+                            # fin de sección si aparece solo o al final
+                            return tour
+                        tour.append(nodo)
         return tour
 
     @staticmethod
