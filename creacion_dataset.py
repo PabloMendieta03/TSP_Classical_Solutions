@@ -1,5 +1,14 @@
-# Creación de la Base de Datos para tener un gran conjunto de problemas del viajante con los que trabajar 
 
+# ----- GENERACIÓN DE DATA SET PARA LAS REDES NEURONALES ----- #
+
+'''
+En este archivo .py, se han creado las diferentes Bases de Datos que se han utilizado para la generación de Problemas del Viajante del Comercio, con su solución y 
+con el formato necesario para que las GNNs lo entiendan y puedan utilizarlo.
+
+Se han creado los siguientes datasets: 
+ - tsps.pt: 500 TSP, tamaños: 5, 8, 10, 12
+ - tsps100.pt: 1000 TSP, tamaño: 5, 10, 12, 15  (~= 5 horas de ejecución)
+'''
 
 # ----- Importación de Librerias ----- #
 from torch_geometric.data import Data
