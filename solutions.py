@@ -4,6 +4,56 @@ import torch
 
 class SolutionAnalysys: 
 
+    def tour_from_probs(probs: torch.Tensor, num_nodes: int) -> list:
+        """
+        Construye un tour Hamiltoniano (cerrado) a partir de:
+        • probs: tensor 1D de tamaño E = N*(N-1) con la probabilidad para cada arista i->j,
+                siguiendo el orden: para i en [0..N-1], j en [0..N-1], j!=i.
+        • num_nodes: número de nodos N
+
+        Empieza en el nodo 0 y, en cada paso, elige entre todas las aristas (current→j)
+        donde j no esté visitado, la de mayor probabilidad. Finalmente cierra el ciclo.
+
+        Retorna:
+            tour (list[int]): Lista de nodos en el orden del tour, incluyendo el retorno a 0.
+        """
+        N = num_nodes
+        visited = {0}
+        tour = [0]
+        current = 0
+
+        for _ in range(N - 1):
+            best_p = -1.0
+            best_j = None
+
+            # Cada nodo i tiene (N-1) aristas salientes, que en `probs` están en bloque:
+            # bloque_i = probs[i*(N-1) : (i+1)*(N-1)]
+            start = current * (N - 1)
+            for rem_idx in range(N - 1):
+                p = probs[start + rem_idx].item()
+                # mapear rem_idx a j real:
+                if rem_idx < current:
+                    j = rem_idx
+                else:
+                    j = rem_idx + 1
+                if j not in visited and p > best_p:
+                    best_p = p
+                    best_j = j
+
+            if best_j is None:
+                # si no hubo candidato (muy raro), elige cualquier no visitado
+                rem = set(range(N)) - visited
+                best_j = rem.pop()
+
+            tour.append(best_j)
+            visited.add(best_j)
+            current = best_j
+
+        # cierra el ciclo
+        tour.append(0)
+        return tour
+
+
     def find_greedy_max_neighbor_traversal(weighted_matrix):
         """
         Find the order of traversal starting from the first node as the root
@@ -70,3 +120,4 @@ class SolutionAnalysys:
             pred_distance  = sum([edge_weights[i, int(solution_path[j].item()), int(solution_path[j+1].item()) ] for j in range(num_nodes-1)] + [edge_weights[i, int(solution_path[-1].item()),0 ] ])
             rel_l1_optimality_gaps +=  (pred_distance - true_distance[i])/ true_distance[i]
         return l1_path_distances/num_graphs , rel_l1_optimality_gaps/num_graphs
+    

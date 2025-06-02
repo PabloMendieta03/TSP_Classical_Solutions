@@ -26,7 +26,7 @@ from dataset import DatasetCreation
 
 TSPs = []
 
-num_datasets = 1000
+num_datasets = 100
 
 for num_nodes in [5, 10, 12, 15]:
   node_coords, distance_matrices,solution_paths, solution_adjacencies, distances = DatasetCreation.create_dataset(num_nodes = num_nodes,  num_datasets = num_datasets)
@@ -55,7 +55,7 @@ for num_nodes in [5, 10, 12, 15]:
       TSPs.append(data)
 
 # Guardar la Base de Datos 
-torch.save(TSPs, "tsps1000.pt")
+torch.save(TSPs, "test100.pt")
 
 
 
