@@ -104,7 +104,7 @@ class DatasetCreation:
             curr = permutation[i]
             next_ = permutation[i + 1]
             to_return[curr, next_] = 1
-        to_return[next_, 0] = 1
+        to_return[next_, permutation[0]] = 1
 
         if distance is not None:
             if distance_matrix is not None:
