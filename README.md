@@ -9,12 +9,15 @@ Clonación del repositorio:
 git clone https://github.com/PabloMendieta03/TSP_Classical_Solutions.git
 ```
 
-
-Creación del entorno e instalación de dependecias: 
+Creación del entorno: 
 ```
  Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
  ptyhon -m venv tsp-venv 
- .\tsp-venv\Scripts\Activate 
+ .\tsp-venv\Scripts\Activate
+```
+Instalación de dependencias: 
+
+```
  pip install -r requirements.txt
 ```
 
