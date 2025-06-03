@@ -7,15 +7,19 @@ class SolutionAnalysys:
     def tour_from_probs(probs: torch.Tensor, num_nodes: int) -> list:
         """
         Construye un tour Hamiltoniano (cerrado) a partir de:
-        • probs: tensor 1D de tamaño E = N*(N-1) con la probabilidad para cada arista i->j,
-                siguiendo el orden: para i en [0..N-1], j en [0..N-1], j!=i.
+        • probs: tensor 1D de tamaño E = N*(N-1) con la probabilidad de cada arista i->j,
+                en el orden “bloque por bloque”:
+                Bloque 0: (0->1, 0->2, …, 0->N-1)  → N-1 elementos
+                Bloque 1: (1->0, 1->2, …, 1->N-1)  → N-1 elementos
+                …
+                Bloque i: (i->0, …, i->i-1, i->i+1, …, i->N-1)  → N-1 elementos
         • num_nodes: número de nodos N
 
         Empieza en el nodo 0 y, en cada paso, elige entre todas las aristas (current→j)
         donde j no esté visitado, la de mayor probabilidad. Finalmente cierra el ciclo.
 
         Retorna:
-            tour (list[int]): Lista de nodos en el orden del tour, incluyendo el retorno a 0.
+            tour (list[int]): Lista de N+1 nodos (ciclo), p.ej. [0, 3, 5, 2, …, 0].
         """
         N = num_nodes
         visited = {0}
@@ -26,22 +30,22 @@ class SolutionAnalysys:
             best_p = -1.0
             best_j = None
 
-            # Cada nodo i tiene (N-1) aristas salientes, que en `probs` están en bloque:
+            # Cada nodo i tiene sus (N-1) aristas “i→j” en el bloque:
             # bloque_i = probs[i*(N-1) : (i+1)*(N-1)]
-            start = current * (N - 1)
-            for rem_idx in range(N - 1):
-                p = probs[start + rem_idx].item()
-                # mapear rem_idx a j real:
-                if rem_idx < current:
-                    j = rem_idx
+            base = current * (N - 1)
+            for offset in range(N - 1):
+                p = probs[base + offset].item()
+                # Convertir offset en el j real (saltando i):
+                if offset < current:
+                    j = offset
                 else:
-                    j = rem_idx + 1
+                    j = offset + 1
                 if j not in visited and p > best_p:
                     best_p = p
                     best_j = j
 
             if best_j is None:
-                # si no hubo candidato (muy raro), elige cualquier no visitado
+                # Si no encuentra candidato (caso límite), toma el primer no visitado
                 rem = set(range(N)) - visited
                 best_j = rem.pop()
 
@@ -49,10 +53,8 @@ class SolutionAnalysys:
             visited.add(best_j)
             current = best_j
 
-        # cierra el ciclo
         tour.append(0)
         return tour
-
 
     def find_greedy_max_neighbor_traversal(weighted_matrix):
         """
