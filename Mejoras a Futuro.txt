@@ -1,0 +1,82 @@
+Depende de tus objetivos y de cómo quieras explotar esa información, pero en general devolver **solo un escalar por arista** es la forma más directa para clasificar 
+si cada arista “pertenece” o no al tour (o para ordenar aristas según probabilidad). Sin embargo, hay varias razones por las que podría ser interesante explorar otras 
+salidas o añadir predicciones auxiliares:
+
+1. **Logits vs. probabilidades**
+
+   * Ahora mismo, si tu capa final (`lin2`) produce un número real sin función de activación, ese valor se suele interpretar como **logit** (antes de aplicar, por ejemplo, sigmoid o softmax).
+   * Si quieres directamente probabilidades, podrías añadir un `sigmoid(out)` como salida, o bien retornar ambos: el logit (para la función de pérdida `BCEWithLogitsLoss`) y la probabilidad (para análisis o presentación de resultados).
+   * Ventaja: te permite usar la pérdida más adecuada (logit + BCEWithLogitsLoss) mientras que visualizas o actúas sobre las probabilidades “crudas” en evaluación.
+
+2. **Embeddings intermedios (nodos y/o aristas) para análisis o regularización**
+
+   * Aunque tu objetivo final sea solo decidir si cada arista está en el tour, a veces es útil recuperar también los vectores embebidos de nodo o de arista que genera la GNN (por ejemplo, justo después de la segunda capa de `MetaLayer`).
+   * ¿Para qué?
+
+     * **Interpretabilidad**: puedes visualizar, proyectando esos embeddings en 2D, cómo se agrupan los nodos según su rol en la ruta.
+     * **Regularización multitarea**: podrías pedirle a la red que, además de predecir “¿arista dentro/fuera?”, también intente reconstruir alguna propiedad auxiliar (distancia original, si el nodo está en una subruta, etc.).
+     * **Ensamblaje o post‐procesado**: si planeas usar un algoritmo heurístico sobre los scores, tener los embeddings de nodos puede ayudar a diseñar métricas de fila o clusterización.
+
+3. **Salida a nivel de nodo o global**
+
+   * Imagina que en lugar de (o además de) puntuar cada arista, te interesa predecir:
+
+     * Un valor “garantizado” de cuán “central” es un nodo para el tour.
+     * Un vector global que represente el “estado” o “calidad” estimada del grafo completo (por ejemplo, un valor aproximado de la longitud total del tour).
+   * En ese caso, podrías modificar tu `forward` para que retorne, además de `out_aristas`, un embedding global `u` o un escalar (p. ej. estimación de coste).
+   * Esto es muy común en arquitecturas de GNN con **GlobalModel**, donde se usa esa vectorización global para predecir propiedades de grafo (en tu caso, el propio coste TSP).
+
+4. **Predicción conjunta nodo + arista (multi‐task)**
+
+   * Podrías definir dos cabezas:
+
+     1. Una que asigne puntuaciones a aristas (tu actual `lin2`).
+     2. Otra que prediga alguna propiedad a nivel de nodo, p. ej. si un nodo está en la posición k‐ésima del tour, o su “prioridad” de visita.
+   * Ventaja: el entrenamiento multitarea a menudo genera embeddings más robustos y generalizables.
+   * Inconveniente: requiere etiquetas adicionales (por ejemplo, saber para cada nodo su orden en la ruta).
+
+5. **Distancia/longitud residual**
+
+   * Si tu red debe aprender a aproximar o corregir la distancia real entre nodos, podrías añadir una cabeza que intente reconstruir `distancia(i,j)` a partir de los embeddings finales.
+   * Esto ayuda a que las capas intermedias aprendan mejor la estructura geométrica (útil si el grafo es euclidiano y quieres que la GNN “sepa” las distancias concretas).
+
+6. **Outputs más granulados en el “decoder”**
+
+   * Ahora mismo tu GNN elige entre cinco decoders predeterminados (`edge_emb`, `nodes_emb`, etc.).
+   * Podrías combinar varios (por ejemplo, concatenar el `edge_emb` y el `node_inner_product`, luego pasar por otra capa), de modo que la red tenga más flexibilidad para decidir qué información es más relevante.
+   * Esto te daría un vector intermedio de mayor dimensión por arista antes de colapsarlo a un escalar, y tal vez sea más expresivo.
+
+7. **Retornar scores y logits por separado**
+
+   * Si durante la validación quieres, por ejemplo, trazar curvas ROC, precision/recall, conviene que tu `forward` devuelva tanto el logit “crudo” como la probabilidad `sigmoid(logit)`. De este modo no necesitas reenviar datos ni recalcular.
+
+---
+
+### Cuándo dejarlo como está (solo un escalar por arista)
+
+* Si tu pipeline posterior solo necesita **comparar** esos valores (por ejemplo, para ordenar las aristas y construir la ruta greedy) o usar un umbral fijo, basta con un escalar por arista.
+* Si en tu objetivo final no te importa inspeccionar embeddings intermedios ni realizar tareas auxiliares, añadir salidas extras solo complica el modelo sin ventaja directa.
+
+### Cuándo conviene agregar salidas adicionales
+
+1. **Quieres hacer análisis de los embeddings** (visualizaciones, clustering).
+2. **Planeas entrenar con pérdidas/pesos auxiliares** (por ejemplo, reconstrucción de distancia o clasificación de nodos).
+3. **Te interesa predecir además el coste global del TSP** o alguna métrica a nivel de grafo.
+4. **Necesitas métricas de incertidumbre**: si devuelves logit + probabilidad, puedes medir distancia al umbral de 0.5, entropías, etc.
+
+---
+
+### Recomendación práctica
+
+1. **Empieza con el escalar por arista** (como lo tienes).
+2. Mide qué tan bien clasifica las aristas para armar el tour (precisión, recall, AUC, longitud final del tour).
+3. Si ves que el modelo está “atascado” o la convergencia es lenta, prueba a:
+
+   * Añadir una cabeza extra que reconstruya la **longitud real** entre nodos (o alguna métrica euclideana).
+   * Retornar el embedding global $u$ y usarlo para predecir un escalar de “coste total aproximado”.
+   * Hacer entrenamiento multitarea:
+
+     * Pérdida principal: BCE con ground‐truth de “arista en tour / fuera de tour”.
+     * Pérdida auxiliar: MSE de “distancia reconstruida” o “posi-ción de nodo”.
+
+En resumen, **si tu única meta es clasificar aristas** para un heurístico posterior, devolver un escalar está bien y es la forma más sencilla. Pero si quieres enriquecer, interpretar o regularizar tu modelo, es muy común **exponer también embeddings intermedios** (nodos/aristas/global) o añadir salidas auxiliares. De esa manera, aumentas el poder expresivo de la GNN y, a menudo, mejoras la calidad final del tour.
