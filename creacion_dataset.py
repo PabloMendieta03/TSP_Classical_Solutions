@@ -8,6 +8,8 @@ con el formato necesario para que las GNNs lo entiendan y puedan utilizarlo.
 Se han creado los siguientes datasets: 
  - tsps.pt: 500 TSP, tamaños: 5, 8, 10, 12
  - tsps100.pt: 1000 TSP, tamaño: 5, 10, 12, 15  (~= 5 horas de ejecución)
+ - test100.pt: 100 TSP, tamaño: 5, 10, 12, 15  
+ - tep_pruebas
 '''
 
 # ----- Importación de Librerias ----- #
@@ -22,13 +24,13 @@ importlib.reload(dataset)
 from dataset import DatasetCreation
 
 
-# ======================== Base de Datos para entrenar la Red Neuronal ======================== #
+
 
 TSPs = []
 
-num_datasets = 100
+num_datasets = 1
 
-for num_nodes in [5, 10, 12, 15]:
+for num_nodes in [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]:
   node_coords, distance_matrices,solution_paths, solution_adjacencies, distances = DatasetCreation.create_dataset(num_nodes = num_nodes,  num_datasets = num_datasets)
 
   # Peso para el entrenamiento de la red neuronal, mayor número de nodos mayor peso tiene en el entrenamiento. 
@@ -55,7 +57,7 @@ for num_nodes in [5, 10, 12, 15]:
       TSPs.append(data)
 
 # Guardar la Base de Datos 
-torch.save(TSPs, "test100.pt")
+torch.save(TSPs, "tsp_pruebas.pt")
 
 
 
