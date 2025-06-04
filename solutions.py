@@ -1,6 +1,7 @@
 #functions that are useful for assessing quality of solutions
 
 import torch
+import math
 
 class SolutionAnalysys: 
 
@@ -123,3 +124,111 @@ class SolutionAnalysys:
             rel_l1_optimality_gaps +=  (pred_distance - true_distance[i])/ true_distance[i]
         return l1_path_distances/num_graphs , rel_l1_optimality_gaps/num_graphs
     
+
+class Opt:
+    """
+    Clase para “deshacer cruces” en un tour TSP usando heurística 2-opt,
+    con límite de pasadas para evitar que el bucle se eternice.
+    """
+
+    def __init__(self, coordinates):
+        """
+        Inicializa la clase con las coordenadas de los nodos.
+
+        Parámetros:
+            - coordinates: lista de pares [(x1, y1), (x2, y2), …]
+        """
+        # Nos aseguramos de tener una lista de tuplas [(x, y), ...]
+        self.coordinates = [tuple(p) for p in coordinates]
+
+    @staticmethod
+    def _orientation(a, b, c):
+        """Devuelve >0 si (a,b,c) son CCW, <0 si CW, 0 si colineales."""
+        return (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0])
+
+    @staticmethod
+    def _on_segment(a, b, c):
+        """True si el punto c está sobre el segmento recta a–b (colinealidad incluida)."""
+        return (min(a[0], b[0]) <= c[0] <= max(a[0], b[0]) and
+                min(a[1], b[1]) <= c[1] <= max(a[1], b[1]))
+
+    @classmethod
+    def _segments_intersect(cls, p1, p2, p3, p4):
+        """
+        Determina si los segmentos p1–p2 y p3–p4 se intersectan.
+        Devuelve True incluso si son colineales y se superponen en algún punto.
+        """
+        o1 = cls._orientation(p1, p2, p3)
+        o2 = cls._orientation(p1, p2, p4)
+        o3 = cls._orientation(p3, p4, p1)
+        o4 = cls._orientation(p3, p4, p2)
+
+        # Caso general: orientaciones opuestas en ambos pares
+        if o1 * o2 < 0 and o3 * o4 < 0:
+            return True
+
+        # Casos colineales: un punto de un segmento está sobre el otro
+        if o1 == 0 and cls._on_segment(p1, p2, p3): return True
+        if o2 == 0 and cls._on_segment(p1, p2, p4): return True
+        if o3 == 0 and cls._on_segment(p3, p4, p1): return True
+        if o4 == 0 and cls._on_segment(p3, p4, p2): return True
+
+        return False
+
+    def uncross(self, tour, max_passes=160):
+        """
+        Aplica heurística 2-opt para deshacer cruces en el tour dado, pero
+        forzando una salida si supera 'max_passes' pasadas sin converger.
+
+        Parámetros:
+            - tour: lista de índices de nodos que define el orden (ej. [0,3,2,1,0]).
+                    Se espera que el primer y último índice sean iguales (ciclo cerrado).
+            - max_passes: número máximo de iteraciones “externas” de 2-opt.
+                          Tras alcanzarlo, devuelve el tour que tenga en ese punto,
+                          aunque aún queden cruces.
+
+        Retorna:
+            - tour_opt: tour optimizado (o al menos reducido de cruces) en <= max_passes.
+        """
+        # Verificamos brevemente si el tour está cerrado
+        if tour[0] != tour[-1]:
+            raise ValueError("El tour debe comenzar y terminar en el mismo nodo.")
+
+        coords = self.coordinates
+        n = len(tour)
+        tour_opt = tour.copy()
+        passes = 0
+
+        # Iteramos hasta max_passes o hasta no haber mejoras
+        while passes < max_passes:
+            passes += 1
+            improved = False
+
+            # Recorremos todas las parejas de aristas no consecutivas
+            for i in range(1, n - 2):
+                # Sacamos índices de nodos para no repetir búsquedas en la lista
+                A_idx = tour_opt[i - 1]
+                B_idx = tour_opt[i]
+                pA = coords[A_idx]
+                pB = coords[B_idx]
+
+                for j in range(i + 1, n - 1):
+                    C_idx = tour_opt[j]
+                    D_idx = tour_opt[j + 1]
+                    pC = coords[C_idx]
+                    pD = coords[D_idx]
+
+                    # Si las aristas se cruzan, invertimos la sección i…j
+                    if self._segments_intersect(pA, pB, pC, pD):
+                        # Intercambiamos (2-opt swap)
+                        tour_opt[i : j + 1] = reversed(tour_opt[i : j + 1])
+                        improved = True
+                        break  # Salimos de 'j'
+                if improved:
+                    # Rompemos 'i' para volver a comprobar desde el principio
+                    break
+
+            if not improved:
+                # Si en esta pasada no hubo ningún cruce intercambiado, ya hemos terminado
+                break
+        return tour_opt

@@ -12,7 +12,11 @@ git clone https://github.com/PabloMendieta03/TSP_Classical_Solutions.git
 Creación del entorno: 
 ```
  Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
+´´´
+´´´
  python -m venv tsp-venv 
+´´´
+´´´
  .\tsp-venv\Scripts\Activate
 ```
 Instalación de dependencias: 
