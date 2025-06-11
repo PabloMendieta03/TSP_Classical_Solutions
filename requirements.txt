@@ -8,3 +8,4 @@ torch-geometric
 matplotlib
 tsplib95
 torchinfo
+scikit-learn
