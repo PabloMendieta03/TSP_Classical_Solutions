@@ -9,7 +9,7 @@ Se han creado los siguientes datasets:
  - tsps.pt: 500 TSP, tamaños: 5, 8, 10, 12
  - tsps100.pt: 1000 TSP, tamaño: 5, 10, 12, 15  (~= 5 horas de ejecución)
  - test100.pt: 100 TSP, tamaño: 5, 10, 12, 15  
- - tep_pruebas
+ - tsp_pruebas
 '''
 
 # ----- Importación de Librerias ----- #
