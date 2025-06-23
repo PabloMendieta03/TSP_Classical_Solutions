@@ -1,3 +1,15 @@
+
+"""
+Este archivo define funciones para inicializar los pesos de modelos de redes neuronales usando distintas estrategias:
+
+- init_xavier: inicialización Xavier (Glorot) uniforme
+- init_he: inicialización Kaiming (He) uniforme
+- init_orthogonal: inicialización ortogonal
+
+La función apply_init permite aplicar cualquiera de estas estrategias a todo un modelo de PyTorch.
+"""
+
+# importanción de librerías
 import torch
 import torch.nn as nn
 
@@ -90,7 +102,4 @@ def apply_init(model: nn.Module, strategy: str):
         func(module)
 
 
-# Ejemplo de uso:
-# from init_strategies import apply_init
-# model = MiGNN()
-# apply_init(model, 'xavier')  # También disponible 'he' u 'orthogonal'
+
