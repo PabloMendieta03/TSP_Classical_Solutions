@@ -1,0 +1,9 @@
+modelo,hidden_dim,num_epochs,lr,weight_decay,decoder,prev_test_loss,new_test_loss,new_test_l1_dist,new_test_opt_gap,model_path
+1,128,16,0.001,0.0001,edge_nodes_emb,0.6825037019593375,0.6825037019593375,7.870297791844009,0.23165065050125122,trained_models_LeakyReLU\model_1_hd128_lr0.001_ep16_dec_edge_nodes_emb.pt
+2,128,16,0.001,5e-05,edge_nodes_emb,0.707531315939767,0.707531315939767,8.15358899923606,0.27914559841156006,trained_models_LeakyReLU\model_2_hd128_lr0.001_ep16_dec_edge_nodes_emb.pt
+4,128,16,0.0005,5e-05,edge_nodes_emb,0.6780625530651637,0.6780625530651637,8.45584517443341,0.29550525546073914,trained_models_LeakyReLU\model_4_hd128_lr0.0005_ep16_dec_edge_nodes_emb.pt
+6,128,32,0.001,5e-05,edge_nodes_emb,0.6869176013129098,0.6869176013129098,8.615938302593765,0.3493230640888214,trained_models_LeakyReLU\model_6_hd128_lr0.001_ep32_dec_edge_nodes_emb.pt
+3,128,16,0.0005,0.0001,edge_nodes_emb,0.6882770640509469,0.6882770640509469,8.779757721270327,0.4275382161140442,trained_models_LeakyReLU\model_3_hd128_lr0.0005_ep16_dec_edge_nodes_emb.pt
+7,128,32,0.0005,0.0001,edge_nodes_emb,0.7161902393613543,0.7161902393613543,9.303656880934188,1.2024174928665161,trained_models_LeakyReLU\model_7_hd128_lr0.0005_ep32_dec_edge_nodes_emb.pt
+8,128,32,0.0005,5e-05,edge_nodes_emb,0.727401488167899,0.727401488167899,9.398381752701082,1.2788890600204468,trained_models_LeakyReLU\model_8_hd128_lr0.0005_ep32_dec_edge_nodes_emb.pt
+5,128,32,0.001,0.0001,edge_nodes_emb,0.7787239108766828,0.7787239108766828,9.542656189748628,1.5195213556289673,trained_models_LeakyReLU\model_5_hd128_lr0.001_ep32_dec_edge_nodes_emb.pt

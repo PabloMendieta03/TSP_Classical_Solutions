@@ -1,0 +1,9 @@
+modelo,hidden_dim,num_epochs,lr,weight_decay,decoder,train_loss,val_loss,test_loss,val_opt_gap,test_opt_gap,model_path
+1,128,16,0.001,0.0001,edge_nodes_emb,"tensor(0.6767, grad_fn=<DivBackward0>)",0.6823330852720473,0.6825037019593375,tensor(0.2259),tensor(0.2317),trained_models_LeakyReLU\model_1_hd128_lr0.001_ep16_dec_edge_nodes_emb.pt
+2,128,16,0.001,5e-05,edge_nodes_emb,"tensor(0.6903, grad_fn=<DivBackward0>)",0.7073276473416222,0.707531315939767,tensor(0.2888),tensor(0.2791),trained_models_LeakyReLU\model_2_hd128_lr0.001_ep16_dec_edge_nodes_emb.pt
+3,128,16,0.0005,0.0001,edge_nodes_emb,"tensor(0.6855, grad_fn=<DivBackward0>)",0.6877229544851515,0.6882770640509469,tensor(0.4209),tensor(0.4275),trained_models_LeakyReLU\model_3_hd128_lr0.0005_ep16_dec_edge_nodes_emb.pt
+4,128,16,0.0005,5e-05,edge_nodes_emb,"tensor(0.6748, grad_fn=<DivBackward0>)",0.678229335281584,0.6780625530651637,tensor(0.3138),tensor(0.2955),trained_models_LeakyReLU\model_4_hd128_lr0.0005_ep16_dec_edge_nodes_emb.pt
+5,128,32,0.001,0.0001,edge_nodes_emb,"tensor(0.7114, grad_fn=<DivBackward0>)",0.7799209256966909,0.7787239108766828,tensor(1.5214),tensor(1.5195),trained_models_LeakyReLU\model_5_hd128_lr0.001_ep32_dec_edge_nodes_emb.pt
+6,128,32,0.001,5e-05,edge_nodes_emb,"tensor(0.6842, grad_fn=<DivBackward0>)",0.686526788605584,0.6869176013129098,tensor(0.3434),tensor(0.3493),trained_models_LeakyReLU\model_6_hd128_lr0.001_ep32_dec_edge_nodes_emb.pt
+7,128,32,0.0005,0.0001,edge_nodes_emb,"tensor(0.7156, grad_fn=<DivBackward0>)",0.717321084605323,0.7161902393613543,tensor(1.1979),tensor(1.2024),trained_models_LeakyReLU\model_7_hd128_lr0.0005_ep32_dec_edge_nodes_emb.pt
+8,128,32,0.0005,5e-05,edge_nodes_emb,"tensor(0.7329, grad_fn=<DivBackward0>)",0.7281254298157163,0.727401488167899,tensor(1.2917),tensor(1.2789),trained_models_LeakyReLU\model_8_hd128_lr0.0005_ep32_dec_edge_nodes_emb.pt

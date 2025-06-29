@@ -1,0 +1,9 @@
+modelo,hidden_dim,num_epochs,lr,weight_decay,decoder,train_loss,val_loss,test_loss,val_opt_gap,test_opt_gap,model_path
+1,128,16,0.001,0.0001,edge_nodes_emb,"tensor(0.7050, grad_fn=<DivBackward0>)",0.7063600851429833,0.7033822757857187,tensor(0.5002),tensor(0.5224),trained_models_ReLU\model_1_hd128_lr0.001_ep16_dec_edge_nodes_emb.pt
+2,128,16,0.001,5e-05,edge_nodes_emb,"tensor(0.7310, grad_fn=<DivBackward0>)",0.7300201820002662,0.7306831189564296,tensor(0.6625),tensor(0.7172),trained_models_ReLU\model_2_hd128_lr0.001_ep16_dec_edge_nodes_emb.pt
+3,128,16,0.0005,0.0001,edge_nodes_emb,"tensor(0.7085, grad_fn=<DivBackward0>)",0.7051711744732327,0.70513847555433,tensor(0.8286),tensor(0.8560),trained_models_ReLU\model_3_hd128_lr0.0005_ep16_dec_edge_nodes_emb.pt
+4,128,16,0.0005,5e-05,edge_nodes_emb,"tensor(0.6841, grad_fn=<DivBackward0>)",0.6900251342190636,0.6887433205332075,tensor(0.4440),tensor(0.4496),trained_models_ReLU\model_4_hd128_lr0.0005_ep16_dec_edge_nodes_emb.pt
+5,128,32,0.001,0.0001,edge_nodes_emb,"tensor(0.6701, grad_fn=<DivBackward0>)",0.6759735080930922,0.6757918391908918,tensor(0.2361),tensor(0.2440),trained_models_ReLU\model_5_hd128_lr0.001_ep32_dec_edge_nodes_emb.pt
+6,128,32,0.001,5e-05,edge_nodes_emb,"tensor(0.7157, grad_fn=<DivBackward0>)",0.710972934961319,0.7120772395815168,tensor(0.6048),tensor(0.6571),trained_models_ReLU\model_6_hd128_lr0.001_ep32_dec_edge_nodes_emb.pt
+7,128,32,0.0005,0.0001,edge_nodes_emb,"tensor(0.7388, grad_fn=<DivBackward0>)",0.7404063642024994,0.7408275740487235,tensor(1.2919),tensor(1.3572),trained_models_ReLU\model_7_hd128_lr0.0005_ep32_dec_edge_nodes_emb.pt
+8,128,32,0.0005,5e-05,edge_nodes_emb,"tensor(0.6816, grad_fn=<DivBackward0>)",0.685201519065433,0.6785918014390128,tensor(0.1450),tensor(0.1561),trained_models_ReLU\model_8_hd128_lr0.0005_ep32_dec_edge_nodes_emb.pt
